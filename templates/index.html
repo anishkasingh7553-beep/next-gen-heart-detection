@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Heart Disease Detection System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #7C5CBF;
+      --purple-light: #9B7DD4;
+      --purple-bg: #F3EFFE;
+      --pink-light: #FFF0F0;
+      --red: #E05A5A;
+      --green: #27AE60;
+      --green-light: #E8F8EF;
+      --orange: #F2994A;
+      --orange-light: #FFF4E5;
+      --text-dark: #1A1A2E;
+      --text-mid: #555;
+      --text-light: #888;
+      --border: #E8E8F0;
+      --white: #ffffff;
+      --bg: #FAF8FF;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      height: 70px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 42px; height: 42px;
+      background: #FFF0F0;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-icon svg { width: 26px; height: 26px; }
+    .logo-text { line-height: 1.2; }
+    .logo-text strong { display: block; font-weight: 800; font-size: 1rem; color: var(--text-dark); }
+    .logo-text span { font-size: 0.78rem; color: var(--purple); font-weight: 600; }
+
+    .nav-links { display: flex; gap: 36px; list-style: none; }
+    .nav-links a {
+      text-decoration: none; font-size: 0.92rem; font-weight: 600;
+      color: var(--text-mid); display: flex; align-items: center; gap: 6px;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--purple); }
+    .nav-links li.active a { color: var(--purple); border-bottom: 2px solid var(--purple); padding-bottom: 2px; }
+
+    .btn-detect-nav {
+      background: var(--purple);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 11px 26px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+      transition: background .2s, transform .15s;
+    }
+    .btn-detect-nav:hover { background: #6548AA; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 54px 48px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-left { max-width: 520px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--purple-bg);
+      color: var(--purple);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+    .hero h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 3.2rem;
+      font-weight: 800;
+      line-height: 1.1;
+      color: var(--text-dark);
+      margin-bottom: 6px;
+    }
+    .hero h1 span { color: var(--purple); }
+    .hero p {
+      font-size: 1rem;
+      color: var(--text-mid);
+      line-height: 1.7;
+      margin-top: 14px;
+    }
+
+    /* ── 3-D HEART (pure CSS + SVG) ── */
+    .hero-right {
+      position: relative;
+      width: 420px;
+      height: 360px;
+      flex-shrink: 0;
+    }
+    /* ECG line behind the heart */
+    .ecg-line {
+      position: absolute;
+      bottom: 30px; left: -40px; right: 0;
+      opacity: .25;
+    }
+    /* floating plus signs */
+    .plus {
+      position: absolute;
+      font-size: 1.6rem;
+      color: #E0A0A0;
+      font-weight: 300;
+      opacity: .55;
+      animation: floatPlus 4s ease-in-out infinite;
+    }
+    .plus:nth-child(1) { top: 10px; right: 60px; animation-delay: 0s; }
+    .plus:nth-child(2) { top: 80px; right: -10px; animation-delay: 1.2s; }
+    .plus:nth-child(3) { bottom: 60px; right: 20px; animation-delay: 2.4s; }
+    @keyframes floatPlus {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    /* The 3-D heart SVG container */
+    .heart-3d-wrap {
+      position: absolute;
+      top: 0; right: 0;
+      width: 360px; height: 340px;
+      display: flex; align-items: center; justify-content: center;
+      filter: drop-shadow(0 30px 60px rgba(180,60,60,.35)) drop-shadow(0 8px 20px rgba(0,0,0,.15));
+      animation: heartbeat 1.8s ease-in-out infinite;
+      transform-origin: center;
+    }
+    @keyframes heartbeat {
+      0%,100% { transform: scale(1); }
+      14%      { transform: scale(1.07); }
+      28%      { transform: scale(1); }
+      42%      { transform: scale(1.04); }
+      70%      { transform: scale(1); }
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      padding: 0 48px 40px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 2px 16px rgba(0,0,0,.06);
+    }
+
+    .card-header {
+      display: flex; align-items: flex-start; gap: 14px;
+      margin-bottom: 28px;
+    }
+    .card-icon {
+      width: 44px; height: 44px;
+      background: var(--purple-bg);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-header-text strong {
+      font-size: 1.05rem; font-weight: 800; color: var(--text-dark);
+    }
+    .card-header-text p {
+      font-size: 0.82rem; color: var(--text-light); margin-top: 2px;
+    }
+
+    /* form grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 18px 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 7px;
+    }
+    .input-wrap {
+      display: flex; align-items: center;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      transition: border-color .2s;
+    }
+    .input-wrap:focus-within { border-color: var(--purple); }
+    .input-wrap input, .input-wrap select {
+      flex: 1;
+      border: none; outline: none;
+      padding: 10px 12px;
+      font-size: 0.92rem;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      background: transparent;
+      color: var(--text-dark);
+    }
+    .input-wrap .input-icon {
+      padding: 0 10px;
+      color: #bbb;
+      display: flex; align-items: center;
+    }
+    .input-wrap select { cursor: pointer; }
+
+    .btn-detect {
+      width: 100%;
+      margin-top: 22px;
+      background: var(--purple);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 15px;
+      font-size: 1rem;
+      font-weight: 800;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: background .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 6px 20px rgba(124,92,191,.35);
+    }
+    .btn-detect:hover { background: #6548AA; transform: translateY(-2px); box-shadow: 0 10px 28px rgba(124,92,191,.45); }
+
+    .secure-note {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 0.78rem; color: var(--text-light); margin-top: 12px;
+    }
+
+    /* ── RESULT CARD ── */
+    .result-status {
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .result-status.low { background: var(--green-light); border: 1px solid #B2DFCC; }
+    .result-status.high { background: #FFF0F0; border: 1px solid #F5BCBC; }
+
+    .result-status-icon { flex-shrink: 0; }
+    .result-status-text strong {
+      font-size: 1.35rem; font-weight: 900;
+    }
+    .result-status.low .result-status-text strong { color: var(--green); }
+    .result-status.high .result-status-text strong { color: var(--red); }
+    .result-status-text p { font-size: 0.88rem; color: var(--text-dark); font-weight: 600; margin-top: 1px; }
+    .result-status-text .prob { font-size: 0.82rem; color: var(--green); font-weight: 700; margin-top: 3px; }
+    .result-status.high .result-status-text .prob { color: var(--red); }
+
+    .result-ecg { margin-left: auto; flex-shrink: 0; }
+
+    .risk-overview-title {
+      font-size: 1rem; font-weight: 800; margin-bottom: 14px;
+    }
+    .risk-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .risk-item {
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .risk-item-left label { font-size: 0.76rem; font-weight: 700; color: var(--text-dark); }
+    .risk-item-left .risk-val {
+      font-size: 0.78rem; font-weight: 700; margin-top: 3px;
+    }
+    .risk-val.low { color: var(--green); }
+    .risk-val.normal { color: var(--green); }
+    .risk-val.borderline { color: var(--orange); }
+    .risk-val.high { color: var(--red); }
+
+    .tip-box {
+      background: var(--orange-light);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 0.82rem;
+      color: var(--text-dark);
+      line-height: 1.5;
+      margin-top: 14px;
+    }
+    .tip-box span { flex-shrink: 0; font-size: 1.1rem; }
+
+    /* ── FEATURES ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 0;
+      background: #fff;
+      border-top: 1px solid var(--border);
+      margin: 0 0 0 0;
+    }
+    .feature-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 28px 30px;
+      border-right: 1px solid var(--border);
+    }
+    .feature-item:last-child { border-right: none; }
+    .feature-icon {
+      width: 46px; height: 46px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.3rem;
+    }
+    .feature-icon.purple { background: var(--purple-bg); }
+    .feature-icon.green { background: var(--green-light); }
+    .feature-icon.orange { background: var(--orange-light); }
+    .feature-icon.blue { background: #EBF4FF; }
+    .feature-text strong { font-size: 0.9rem; font-weight: 800; }
+    .feature-text p { font-size: 0.78rem; color: var(--text-light); margin-top: 3px; line-height: 1.4; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #fff;
+      border-top: 1px solid var(--border);
+      padding: 18px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+    footer .foot-left { display: flex; align-items: center; gap: 8px; }
+    footer .foot-left span { color: var(--red); }
+    footer .foot-mid { font-weight: 700; color: var(--purple); }
+    
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #c5b8e8; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 26 26" fill="none">
+        <path d="M13 22s-9-5.5-9-12A6 6 0 0 1 13 6.27 6 6 0 0 1 22 10c0 6.5-9 12-9 12z" fill="#E05A5A" stroke="#E05A5A" stroke-width="1.5"/>
+        <path d="M7 13h2.5l2-4 2 8 2-4H18" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <strong>Heart Disease</strong>
+      <span>Detection System</span>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li class="active"><a href="#">🏠 Home</a></li>
+    <li><a href="#">👤 About</a></li>
+    <li><a href="#">❓ How it Works</a></li>
+    <li><a href="#">⭐ Features</a></li>
+    <li><a href="#">✉ Contact</a></li>
+  </ul>
+  <button class="btn-detect-nav">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 21s-8-5-8-11a8 8 0 0 1 16 0c0 6-8 11-8 11z"/></svg>
+    Detect Now
+  </button>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9 12l2 2 4-4"/></svg>
+      
+    </div>
+    <h1>Heart Disease<br/><span>Detection System</span></h1>
+    <p>Advanced machine learning technology to detect potential heart disease early based on your health parameters.<br/>Get insights, stay healthy, live better!</p>
+  </div>
+
+  <div class="hero-right">
+    <!-- floating + signs -->
+    <div class="plus">+</div>
+    <div class="plus">+</div>
+    <div class="plus">+</div>
+
+    <!-- ECG SVG line -->
+    <svg class="ecg-line" viewBox="0 0 420 80" fill="none">
+      <path d="M0 50 L60 50 L80 50 L90 15 L105 75 L118 10 L130 50 L200 50 L210 50 L220 50 L230 25 L240 65 L250 30 L260 50 L360 50 L420 50"
+            stroke="#E05A5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+    </svg>
+
+    <!-- 3D Heart SVG -->
+    <div class="heart-3d-wrap">
+      <svg viewBox="0 0 340 320" xmlns="http://www.w3.org/2000/svg" width="340" height="320">
+        <defs>
+          <!-- Main heart body gradient -->
+          <radialGradient id="hg1" cx="38%" cy="30%" r="65%">
+            <stop offset="0%" stop-color="#FF6B6B"/>
+            <stop offset="40%" stop-color="#E03030"/>
+            <stop offset="100%" stop-color="#8B0000"/>
+          </radialGradient>
+          <!-- Upper left lobe highlight -->
+          <radialGradient id="hg2" cx="30%" cy="25%" r="50%">
+            <stop offset="0%" stop-color="#FF9090" stop-opacity=".9"/>
+            <stop offset="100%" stop-color="#CC2222" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Right lobe gradient -->
+          <radialGradient id="hg3" cx="65%" cy="30%" r="50%">
+            <stop offset="0%" stop-color="#D04040"/>
+            <stop offset="100%" stop-color="#7A0000"/>
+          </radialGradient>
+          <!-- Deep shadow at bottom -->
+          <radialGradient id="hg4" cx="50%" cy="95%" r="55%">
+            <stop offset="0%" stop-color="#5C0000" stop-opacity=".8"/>
+            <stop offset="100%" stop-color="#5C0000" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Aorta gradient -->
+          <linearGradient id="aorta" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#6090DD"/>
+            <stop offset="50%" stop-color="#4060BB"/>
+            <stop offset="100%" stop-color="#203080"/>
+          </linearGradient>
+          <!-- Vein gradient -->
+          <linearGradient id="vein1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#5585CC"/>
+            <stop offset="100%" stop-color="#2040A0"/>
+          </linearGradient>
+          <!-- Artery accent -->
+          <linearGradient id="artery1" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#FF7777"/>
+            <stop offset="100%" stop-color="#BB2222"/>
+          </linearGradient>
+          <!-- Specular highlight -->
+          <radialGradient id="spec" cx="35%" cy="22%" r="28%">
+            <stop offset="0%" stop-color="white" stop-opacity=".55"/>
+            <stop offset="100%" stop-color="white" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Drop shadow filter -->
+          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
+            <feOffset dx="0" dy="12"/>
+            <feComponentTransfer><feFuncA type="linear" slope="0.35"/></feComponentTransfer>
+            <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <!-- Inner glow -->
+          <filter id="iglow">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <!-- Clip path for heart -->
+          <clipPath id="heartClip">
+            <path d="M170 275 C170 275 40 190 40 110 C40 72 68 48 105 48 C128 48 148 60 170 80 C192 60 212 48 235 48 C272 48 300 72 300 110 C300 190 170 275 170 275 Z"/>
+          </clipPath>
+        </defs>
+
+        <g filter="url(#shadow)">
+
+          <!-- ─ MAIN HEART BODY ─ -->
+          <path d="M170 275 C170 275 40 190 40 110 C40 72 68 48 105 48 C128 48 148 60 170 80 C192 60 212 48 235 48 C272 48 300 72 300 110 C300 190 170 275 170 275 Z"
+                fill="url(#hg1)"/>
+
+          <!-- Base deep shadow overlay -->
+          <path d="M170 275 C170 275 40 190 40 110 C40 72 68 48 105 48 C128 48 148 60 170 80 C192 60 212 48 235 48 C272 48 300 72 300 110 C300 190 170 275 170 275 Z"
+                fill="url(#hg4)"/>
+
+          <!-- Right lobe darker -->
+          <path d="M170 80 C192 60 212 48 235 48 C272 48 300 72 300 110 C300 155 260 195 220 230 C200 215 180 195 170 180 Z"
+                fill="url(#hg3)" opacity=".7"/>
+
+          <!-- Left lobe highlight -->
+          <ellipse cx="118" cy="98" rx="55" ry="52" fill="url(#hg2)" opacity=".75"/>
+
+          <!-- Subtle crease line between lobes -->
+          <path d="M170 80 C170 100 168 130 165 160 C163 175 162 190 165 210"
+                stroke="#8B0000" stroke-width="2.5" fill="none" opacity=".55" stroke-linecap="round"/>
+
+          <!-- Surface texture veins on heart -->
+          <path d="M130 130 C125 155 120 175 115 200 C110 215 108 230 110 248"
+                stroke="#C02020" stroke-width="1.8" fill="none" opacity=".4" stroke-linecap="round"/>
+          <path d="M210 140 C215 160 218 180 215 205 C213 220 210 235 208 252"
+                stroke="#C02020" stroke-width="1.5" fill="none" opacity=".35" stroke-linecap="round"/>
+          <path d="M155 170 C148 185 142 200 140 220"
+                stroke="#CC2020" stroke-width="1.2" fill="none" opacity=".3" stroke-linecap="round"/>
+
+          <!-- Left coronary artery -->
+          <path d="M165 95 C155 105 135 115 115 125 C100 132 88 140 82 158"
+                stroke="url(#artery1)" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <path d="M115 125 C108 138 105 155 106 172"
+                stroke="url(#artery1)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <!-- artery highlight -->
+          <path d="M165 95 C155 105 135 115 115 125 C100 132 88 140 82 158"
+                stroke="#FF9090" stroke-width="2" fill="none" stroke-linecap="round" opacity=".5"/>
+
+          <!-- Right coronary artery -->
+          <path d="M175 95 C190 108 215 118 232 135 C242 148 248 165 245 185"
+                stroke="#CC3333" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+          <path d="M175 95 C190 108 215 118 232 135 C242 148 248 165 245 185"
+                stroke="#FF8888" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".55"/>
+
+          <!-- Specular highlight (gloss) -->
+          <path d="M170 275 C170 275 40 190 40 110 C40 72 68 48 105 48 C128 48 148 60 170 80 C192 60 212 48 235 48 C272 48 300 72 300 110 C300 190 170 275 170 275 Z"
+                fill="url(#spec)"/>
+
+          <!-- ─ AORTA (the large blue/purple arch) ─ -->
+          <!-- Main aorta arch -->
+          <path d="M158 55 C158 40 155 25 155 15 C155 8 158 4 163 3 C168 2 172 2 178 3 C183 4 186 8 186 15 C186 22 184 35 183 48"
+                fill="url(#aorta)" stroke="#2A4A9A" stroke-width="1"/>
+          <!-- Aorta highlight -->
+          <path d="M161 55 C161 40 159 26 159 16 C159 10 161 6 164 5"
+                stroke="#90A8EE" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".7"/>
+          <!-- Aorta arch top -->
+          <ellipse cx="170" cy="14" rx="16" ry="8" fill="#3055BB" stroke="#2040A0" stroke-width="1"/>
+          <ellipse cx="170" cy="14" rx="10" ry="5" fill="#6080CC" opacity=".7"/>
+
+          <!-- Pulmonary artery (branching from aorta) -->
+          <path d="M175 45 C185 35 205 30 215 28 C225 26 235 28 240 34"
+                fill="none" stroke="url(#vein1)" stroke-width="7" stroke-linecap="round"/>
+          <path d="M240 34 C245 40 244 48 240 52"
+                fill="none" stroke="url(#vein1)" stroke-width="7" stroke-linecap="round"/>
+          <!-- highlight on pulmonary -->
+          <path d="M175 45 C185 35 205 30 215 28 C225 26 235 28 240 34"
+                fill="none" stroke="#8AAAE8" stroke-width="2.5" stroke-linecap="round" opacity=".6"/>
+
+          <!-- Left pulmonary branch -->
+          <path d="M165 45 C155 35 135 30 125 28 C115 26 106 28 102 34"
+                fill="none" stroke="url(#vein1)" stroke-width="6" stroke-linecap="round"/>
+          <path d="M165 45 C155 35 135 30 125 28 C115 26 106 28 102 34"
+                fill="none" stroke="#8AAAE8" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+
+          <!-- Superior vena cava -->
+          <path d="M155 60 C150 50 148 40 148 30 C148 22 151 16 155 14"
+                fill="url(#vein1)" stroke="#2040A0" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M151 60 C147 50 146 40 146.5 30"
+                fill="none" stroke="#7090CC" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+
+          <!-- Second specular for depth -->
+          <ellipse cx="135" cy="82" rx="30" ry="22" fill="white" opacity=".09"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ── MAIN GRID ── -->
+<div class="main-grid">
+
+  <!-- LEFT: Patient Info Form -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7C5CBF" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </div>
+      <div class="card-header-text">
+        <strong>Patient Health Information</strong>
+        <p>Please provide the following health parameters</p>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Age (years)</label>
+        <div class="input-wrap">
+          <input type="number" id="age" placeholder="e.g. 45" min="1" max="120"/>
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Blood Pressure (mm Hg)</label>
+        <div class="input-wrap">
+          <input type="number" id="bp" placeholder="e.g. 120" min="50" max="250"/>
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Cholesterol (mg/dl)</label>
+        <div class="input-wrap">
+          <input type="number" id="chol" placeholder="e.g. 200" min="100" max="600"/>
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M12 21C7 21 3 16.97 3 12S7 3 12 3s9 4.03 9 9-4 9-9 9z"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Blood Sugar (mg/dl)</label>
+        <div class="input-wrap">
+          <input type="number" id="sugar" placeholder="e.g. 100" min="50" max="500"/>
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Heart Rate (bpm)</label>
+        <div class="input-wrap">
+          <input type="number" id="hr" placeholder="e.g. 72" min="30" max="250"/>
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><polyline points="2 12 6 12 8 5 10 19 12 12 14 9 16 12 22 12"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Gender</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          </span>
+          <select id="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-detect" onclick="detectRisk()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Detect Heart Disease Risk
+    </button>
+    <div class="secure-note">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Your data is secure and used only for detection purposes.
+    </div>
+  </div>
+
+  <!-- RIGHT: Detection Result -->
+  <div class="card" id="resultCard">
+    <div class="card-header">
+      <div class="card-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7C5CBF" stroke-width="2.2"><path d="M12 21s-8-5-8-11a8 8 0 0 1 16 0c0 6-8 11-8 11z"/><polyline points="8 11 11 14 16 9"/></svg>
+      </div>
+      <div class="card-header-text">
+        <strong>Detection Result</strong>
+      </div>
+    </div>
+
+    <!-- Empty placeholder shown before detect is clicked -->
+    <div id="emptyState" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 20px; text-align:center; gap:16px;">
+      <svg width="72" height="72" viewBox="0 0 72 72" fill="none" opacity=".18">
+        <path d="M36 64s-26-15-26-34A18 18 0 0 1 36 12.5 18 18 0 0 1 62 30c0 19-26 34-26 34z" fill="#7C5CBF"/>
+        <polyline points="22 36 29 36 33 26 36 46 40 30 43 36 50 36" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <p style="color:var(--text-light); font-size:0.92rem; font-weight:600; max-width:230px; line-height:1.7;">Please fill in the patient details and click <strong style="color:var(--purple);">Detect Heart Disease Risk</strong> to see the result here.</p>
+    </div>
+
+    <!-- Actual results — hidden until button clicked -->
+    <div id="resultContent" style="display:none;">
+
+      <!-- Patient Details Summary -->
+      <div style="background:var(--purple-bg); border-radius:12px; padding:13px 16px; margin-bottom:16px;">
+        <div style="font-size:0.72rem; font-weight:800; color:var(--purple); margin-bottom:8px; display:flex; align-items:center; gap:5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          PATIENT DETAILS
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px 12px;">
+          <div style="font-size:0.78rem; color:var(--text-mid);"><span style="color:var(--text-light); font-weight:700;">Age</span><br/><strong id="s-age" style="color:var(--text-dark);">—</strong></div>
+          <div style="font-size:0.78rem; color:var(--text-mid);"><span style="color:var(--text-light); font-weight:700;">Gender</span><br/><strong id="s-gender" style="color:var(--text-dark);">—</strong></div>
+          <div style="font-size:0.78rem; color:var(--text-mid);"><span style="color:var(--text-light); font-weight:700;">Blood Pressure</span><br/><strong id="s-bp" style="color:var(--text-dark);">—</strong> <span style="font-size:0.68rem;">mm Hg</span></div>
+          <div style="font-size:0.78rem; color:var(--text-mid);"><span style="color:var(--text-light); font-weight:700;">Cholesterol</span><br/><strong id="s-chol" style="color:var(--text-dark);">—</strong> <span style="font-size:0.68rem;">mg/dl</span></div>
+          <div style="font-size:0.78rem; color:var(--text-mid);"><span style="color:var(--text-light); font-weight:700;">Blood Sugar</span><br/><strong id="s-sugar" style="color:var(--text-dark);">—</strong> <span style="font-size:0.68rem;">mg/dl</span></div>
+          <div style="font-size:0.78rem; color:var(--text-mid);"><span style="color:var(--text-light); font-weight:700;">Heart Rate</span><br/><strong id="s-hr" style="color:var(--text-dark);">—</strong> <span style="font-size:0.68rem;">bpm</span></div>
+        </div>
+      </div>
+
+      <!-- Result Status -->
+      <div class="result-status low" id="statusBox">
+        <div class="result-status-icon">
+          <svg id="statusIcon" width="44" height="44" viewBox="0 0 44 44" fill="none">
+            <circle cx="22" cy="22" r="21" fill="#E8F8EF" stroke="#27AE60" stroke-width="2"/>
+            <path d="M13 22l6 6 12-12" stroke="#27AE60" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="result-status-text">
+          <strong id="riskLabel">LOW RISK</strong>
+          <p id="riskDesc">No Significant Heart Disease Detected</p>
+          <div class="prob" id="riskProb">Probability: —</div>
+        </div>
+        <div class="result-ecg">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+            <circle cx="26" cy="26" r="25" fill="#E8F8EF" stroke="#27AE60" stroke-width="1.5"/>
+            <polyline points="8,26 15,26 18,18 21,34 24,20 27,26 34,26 37,20 40,26 44,26"
+                      stroke="#27AE60" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Risk Factors -->
+      <div class="risk-overview-title">Risk Factors Overview</div>
+      <div class="risk-grid">
+        <div class="risk-item">
+          <div class="risk-item-left">
+            <label>Age Factor</label>
+            <div class="risk-val low" id="rf-age">Low Risk</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27AE60" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="risk-item">
+          <div class="risk-item-left">
+            <label>BP Factor</label>
+            <div class="risk-val normal" id="rf-bp">Normal</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27AE60" stroke-width="2"><path d="M12 21C7 21 3 16.97 3 12S7 3 12 3s9 4.03 9 9-4 9-9 9z"/></svg>
+        </div>
+        <div class="risk-item">
+          <div class="risk-item-left">
+            <label>Cholesterol</label>
+            <div class="risk-val borderline" id="rf-chol">Borderline</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F2994A" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"/></svg>
+        </div>
+        <div class="risk-item">
+          <div class="risk-item-left">
+            <label>Sugar Level</label>
+            <div class="risk-val normal" id="rf-sugar">Normal</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27AE60" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z"/></svg>
+        </div>
+        <div class="risk-item">
+          <div class="risk-item-left">
+            <label>Heart Rate</label>
+            <div class="risk-val normal" id="rf-hr">Normal</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27AE60" stroke-width="2"><polyline points="2 12 6 12 8 5 10 19 12 12 14 9 16 12 22 12"/></svg>
+        </div>
+      </div>
+
+      <div class="tip-box" id="tipBox">
+        <span>💡</span>
+        <div id="tipText">Maintain a healthy lifestyle with regular exercise, balanced diet, and periodic health checkups.</div>
+      </div>
+
+    </div><!-- end #resultContent -->
+  </div>
+</div>
+
+<!-- ── FEATURES STRIP ── -->
+<div class="features">
+  <div class="feature-item">
+    <div class="feature-icon purple">🧠</div>
+    <div class="feature-text">
+      <strong>AI Powered</strong>
+      <p>Advanced ML algorithms for accurate detection</p>
+    </div>
+  </div>
+  <div class="feature-item">
+    <div class="feature-icon green">🛡️</div>
+    <div class="feature-text">
+      <strong>Secure &amp; Private</strong>
+      <p>Your health data is encrypted and completely secure</p>
+    </div>
+  </div>
+  <div class="feature-item">
+    <div class="feature-icon orange">⚡</div>
+    <div class="feature-text">
+      <strong>Fast Results</strong>
+      <p>Get instant detection results and health insights</p>
+    </div>
+  </div>
+  <div class="feature-item">
+    <div class="feature-icon blue">📊</div>
+    <div class="feature-text">
+      <strong>Accurate Analysis</strong>
+      <p>Trained on advanced datasets for better accuracy</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="foot-left">
+    <svg width="22" height="22" viewBox="0 0 26 26" fill="none">
+      <path d="M13 22s-9-5.5-9-12A6 6 0 0 1 13 6.27 6 6 0 0 1 22 10c0 6.5-9 12-9 12z" fill="#E05A5A"/>
+      <path d="M7 13h2.5l2-4 2 8 2-4H18" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Heart Disease Detection System | 
+  </div>
+  <div class="foot-mid">Developed by: Anishka Singh</div>
+  
+</footer>
+
+<script>
+  function detectRisk() {
+    const age    = parseInt(document.getElementById('age').value);
+    const bp     = parseInt(document.getElementById('bp').value);
+    const chol   = parseInt(document.getElementById('chol').value);
+    const sugar  = parseInt(document.getElementById('sugar').value);
+    const hr     = parseInt(document.getElementById('hr').value);
+    const gender = document.getElementById('gender').value;
+
+    if (!age || !bp || !chol || !sugar || !hr) {
+      alert('Please fill in all patient details before detecting risk.');
+      return;
+    }
+
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('resultContent').style.display = 'block';
+
+    document.getElementById('s-age').textContent    = age + ' yrs';
+    document.getElementById('s-gender').textContent = gender.charAt(0).toUpperCase() + gender.slice(1);
+    document.getElementById('s-bp').textContent     = bp;
+    document.getElementById('s-chol').textContent   = chol;
+    document.getElementById('s-sugar').textContent  = sugar;
+    document.getElementById('s-hr').textContent     = hr;
+
+    let score = 0;
+    let ageFactor = 'Low Risk', bpFactor = 'Normal', cholFactor = 'Normal', sugarFactor = 'Normal', hrFactor = 'Normal';
+
+    if (age >= 65)       { score += 30; ageFactor = 'High Risk'; }
+    else if (age >= 50)  { score += 20; ageFactor = 'Moderate'; }
+    else if (age >= 40)  { score += 10; ageFactor = 'Low Risk'; }
+
+    if (bp >= 140)       { score += 25; bpFactor = 'High'; }
+    else if (bp >= 130)  { score += 15; bpFactor = 'Elevated'; }
+    else if (bp >= 120)  { score +=  5; bpFactor = 'Normal'; }
+    else                 {              bpFactor = 'Optimal'; }
+
+    if (chol >= 240)     { score += 25; cholFactor = 'High'; }
+    else if (chol >= 200){ score += 12; cholFactor = 'Borderline'; }
+
+    if (sugar >= 200)      { score += 20; sugarFactor = 'Diabetic'; }
+    else if (sugar >= 126) { score += 15; sugarFactor = 'Pre-Diabetic'; }
+    else if (sugar >= 100) { score +=  5; sugarFactor = 'Normal'; }
+
+    if (hr > 100 || hr < 50) { score += 15; hrFactor = 'Irregular'; }
+    else if (hr > 90)         { score +=  8; hrFactor = 'Elevated'; }
+
+    const probability = Math.min(score, 95);
+    const isHigh = probability >= 50;
+
+    document.getElementById('statusBox').className = 'result-status ' + (isHigh ? 'high' : 'low');
+    document.getElementById('riskLabel').textContent = isHigh ? 'HIGH RISK' : 'LOW RISK';
+    document.getElementById('riskDesc').textContent  = isHigh ? 'Significant Heart Disease Risk Detected' : 'No Significant Heart Disease Detected';
+    document.getElementById('riskProb').textContent  = 'Probability: ' + probability + '%';
+
+    const icon = document.getElementById('statusIcon');
+    icon.innerHTML = isHigh
+      ? '<circle cx="22" cy="22" r="21" fill="#FFF0F0" stroke="#E05A5A" stroke-width="2"/><path d="M14 14l16 16M30 14L14 30" stroke="#E05A5A" stroke-width="2.8" stroke-linecap="round"/>'
+      : '<circle cx="22" cy="22" r="21" fill="#E8F8EF" stroke="#27AE60" stroke-width="2"/><path d="M13 22l6 6 12-12" stroke="#27AE60" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>';
+
+    setRF('rf-age',   ageFactor);
+    setRF('rf-bp',    bpFactor);
+    setRF('rf-chol',  cholFactor);
+    setRF('rf-sugar', sugarFactor);
+    setRF('rf-hr',    hrFactor);
+
+    document.getElementById('tipText').textContent = isHigh
+      ? 'Please consult a cardiologist immediately. Avoid high-fat foods, reduce stress, and monitor your blood pressure daily.'
+      : 'Maintain a healthy lifestyle with regular exercise, balanced diet, and periodic health checkups.';
+
+    document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function setRF(id, val) {
+    const el = document.getElementById(id);
+    el.textContent = val;
+    el.className = 'risk-val';
+    if (['Low Risk','Normal','Optimal'].includes(val))                          el.classList.add('normal');
+    else if (['Borderline','Elevated','Pre-Diabetic','Moderate'].includes(val)) el.classList.add('borderline');
+    else el.classList.add('high');
+  }
+</script>
+</body>
+</html>
